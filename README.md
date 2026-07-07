@@ -4,6 +4,10 @@
 
 ## 截图
 
+![开始界面](screenshot-start.png)
+
+![游戏进行中](screenshot-gameplay.png)
+
 
 ## 特性
 
