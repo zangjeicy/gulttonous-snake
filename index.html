@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0e1a" />
+  <title>NEON SNAKE — 霓虹贪吃蛇</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 背景特效层 -->
+    <div class="bg-fx">
+      <div class="grid-overlay"></div>
+      <div class="scan-line"></div>
+    </div>
+
+    <!-- 标题栏 -->
+    <header class="app-header">
+      <h1 class="logo">NEON<span class="logo-accent">SNAKE</span></h1>
+      <div class="header-tag">霓虹贪吃蛇 · v1.0</div>
+    </header>
+
+    <!-- 主布局 -->
+    <main class="game-layout">
+      <!-- 左侧：游戏画布区 -->
+      <section class="canvas-section">
+        <div class="canvas-wrapper" id="canvas-wrapper">
+          <canvas id="game-canvas" width="600" height="600"></canvas>
+
+          <!-- 待机/开始遮罩 -->
+          <div class="overlay overlay--active" id="overlay-start">
+            <div class="overlay-content">
+              <div class="overlay-icon">🐍</div>
+              <h2 class="overlay-title">准备出发</h2>
+              <p class="overlay-desc">用方向键控制蛇身，吃掉食物不断成长</p>
+              <button class="btn btn--primary btn--lg" id="btn-start">
+                <span class="btn-icon">▶</span> 开始游戏
+              </button>
+              <p class="overlay-hint">或按 <kbd>空格键</kbd> 开始</p>
+            </div>
+          </div>
+
+          <!-- 暂停遮罩 -->
+          <div class="overlay" id="overlay-pause">
+            <div class="overlay-content">
+              <div class="overlay-icon">⏸</div>
+              <h2 class="overlay-title">已暂停</h2>
+              <button class="btn btn--primary" id="btn-resume">
+                <span class="btn-icon">▶</span> 继续
+              </button>
+              <p class="overlay-hint">或按 <kbd>P</kbd> 继续</p>
+            </div>
+          </div>
+
+          <!-- 游戏结束遮罩 -->
+          <div class="overlay" id="overlay-gameover">
+            <div class="overlay-content overlay-content--gameover">
+              <div class="overlay-icon" id="gameover-icon">💀</div>
+              <h2 class="overlay-title overlay-title--danger">游戏结束</h2>
+              <div class="gameover-score">
+                <span class="gameover-label">本局得分</span>
+                <span class="gameover-value" id="gameover-score">0</span>
+              </div>
+              <div class="new-record-badge" id="new-record-badge" style="display:none;">
+                <span>🏆</span> 新纪录！
+              </div>
+              <div class="gameover-stats">
+                <div class="stat">
+                  <span class="stat-label">蛇身长度</span>
+                  <span class="stat-value" id="gameover-length">3</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-label">食物数量</span>
+                  <span class="stat-value" id="gameover-food">0</span>
+                </div>
+              </div>
+              <button class="btn btn--primary btn--lg" id="btn-restart">
+                <span class="btn-icon">↻</span> 再来一局
+              </button>
+              <button class="btn btn--ghost" id="btn-back-home">返回首页</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 移动端虚拟方向键 -->
+        <div class="dpad" id="dpad">
+          <button class="dpad-btn dpad-up" data-direction="up" aria-label="向上">▲</button>
+          <button class="dpad-btn dpad-left" data-direction="left" aria-label="向左">◀</button>
+          <button class="dpad-btn dpad-right" data-direction="right" aria-label="向右">▶</button>
+          <button class="dpad-btn dpad-down" data-direction="down" aria-label="向下">▼</button>
+        </div>
+      </section>
+
+      <!-- 右侧：信息面板 -->
+      <aside class="sidebar">
+        <!-- 分数面板 -->
+        <div class="panel score-panel">
+          <div class="score-row">
+            <div class="score-block">
+              <span class="score-label">当前得分</span>
+              <span class="score-value" id="score-current">0</span>
+            </div>
+            <div class="score-block score-block--accent">
+              <span class="score-label">最高分</span>
+              <span class="score-value" id="score-best">0</span>
+            </div>
+          </div>
+          <div class="score-meta">
+            <span class="meta-item">长度 <strong id="snake-length">3</strong></span>
+            <span class="meta-item">速度 <strong id="snake-speed">1.0x</strong></span>
+          </div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="panel control-panel">
+          <button class="btn btn--primary" id="btn-play-pause">
+            <span class="btn-icon">▶</span> <span id="play-pause-text">开始</span>
+          </button>
+          <button class="btn btn--secondary" id="btn-reset">
+            <span class="btn-icon">↻</span> 重新开始
+          </button>
+        </div>
+
+        <!-- 排行榜 -->
+        <div class="panel leaderboard-panel">
+          <h3 class="panel-title"><span class="title-icon">🏆</span> 排行榜 TOP 10</h3>
+          <ol class="leaderboard-list" id="leaderboard-list">
+            <li class="leaderboard-empty">暂无记录，快来挑战吧！</li>
+          </ol>
+        </div>
+
+        <!-- 设置 -->
+        <div class="panel settings-panel">
+          <h3 class="panel-title"><span class="title-icon">⚙</span> 设置</h3>
+          <label class="toggle-row">
+            <span class="toggle-label">音效</span>
+            <button class="toggle" id="toggle-sound" role="switch" aria-checked="true">
+              <span class="toggle-slider"></span>
+            </button>
+          </label>
+          <label class="toggle-row">
+            <span class="toggle-label">穿墙模式</span>
+            <button class="toggle" id="toggle-wrap" role="switch" aria-checked="false">
+              <span class="toggle-slider"></span>
+            </button>
+          </label>
+          <button class="btn btn--danger btn--sm" id="btn-clear-board">清空排行榜</button>
+        </div>
+
+        <!-- 操作提示 -->
+        <div class="panel hint-panel">
+          <h3 class="panel-title"><span class="title-icon">⌨</span> 操作说明</h3>
+          <div class="hint-list">
+            <div class="hint-item"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> <span>控制方向</span></div>
+            <div class="hint-item"><kbd>空格</kbd> <span>开始/继续</span></div>
+            <div class="hint-item"><kbd>P</kbd> <span>暂停/继续</span></div>
+            <div class="hint-item"><kbd>R</kbd> <span>重新开始</span></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Toast 提示 -->
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
